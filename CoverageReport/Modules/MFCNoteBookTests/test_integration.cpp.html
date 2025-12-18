@@ -1,0 +1,217 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+        <meta charset="utf-8"/>
+	    <title>test_integration.cpp</title>
+	    <link href="../../third-party/google-code-prettify/prettify-CppCoverage.css" type="text/css" rel="stylesheet" />
+	    <script type="text/javascript" src="../../third-party/google-code-prettify/prettify.js"></script>
+	</head>
+    <body onload="prettyPrint()">
+        <h4></h4>
+        <pre class="prettyprint lang-cpp linenums">
+// test_integration.cpp - ¼¯³É²âÊÔ£¨ConfigManager + TestableLogic£©
+#include "pch.h"
+
+using namespace TestableLogic;
+
+// ============ ²âÊÔ¼Ð¾ß ============
+class IntegrationTest : public ::testing::Test
+{
+protected:
+    void SetUp() override
+<span style = "background-color:#dfd">    {</span>
+        // È·±£ÅäÖÃÒÑ¼ÓÔØ
+<span style = "background-color:#dfd">        CConfigManager&amp; config = CConfigManager::GetInstance();
+        ASSERT_TRUE(config.IsConfigValid()) &lt;&lt; "ÅäÖÃÎ´ÕýÈ·¼ÓÔØ";</span>
+
+<span style = "background-color:#dfd">        m_strStudentID = config.GetStudentID();
+        m_strSecretKey = config.GetSecretKey();
+    }</span>
+
+    CString m_strStudentID;
+    CString m_strSecretKey;
+};
+
+// ============ ÅäÖÃ¹ÜÀí²âÊÔ ============
+
+<span style = "background-color:#dfd">TEST_F(IntegrationTest, ConfigManager_IsValid)
+{
+    CConfigManager&amp; config = CConfigManager::GetInstance();</span>
+
+<span style = "background-color:#dfd">    EXPECT_TRUE(config.IsConfigValid());
+    EXPECT_FALSE(config.GetStudentID().IsEmpty());
+    EXPECT_FALSE(config.GetSecretKey().IsEmpty());
+}</span>
+
+<span style = "background-color:#dfd">TEST_F(IntegrationTest, ConfigManager_StudentIDFormat)
+{
+    EXPECT_LE(m_strStudentID.GetLength(), 20)</span>
+        &lt;&lt; "Ñ§ºÅ³¤¶È²»Ó¦³¬¹ý20×Ö·û";
+<span style = "background-color:#dfd">    EXPECT_GT(m_strStudentID.GetLength(), 0)</span>
+        &lt;&lt; "Ñ§ºÅ²»ÄÜÎª¿Õ";
+<span style = "background-color:#dfd">}</span>
+
+<span style = "background-color:#dfd">TEST_F(IntegrationTest, ConfigManager_SecretKeyLength)
+{
+    EXPECT_GE(m_strSecretKey.GetLength(), 8)</span>
+        &lt;&lt; "ÃÜÔ¿³¤¶ÈÓ¦ÖÁÉÙ8×Ö·û";
+<span style = "background-color:#dfd">}</span>
+
+// ============ ÍêÕûÁ÷³Ì²âÊÔ£¨Ê¹ÓÃÅäÖÃ£© ============
+
+<span style = "background-color:#dfd">TEST_F(IntegrationTest, CreateAndParse_WithConfig)
+{
+    std::string content = "Test content with config";</span>
+
+    // ×ª»»Îª ANSI
+<span style = "background-color:#dfd">    CT2A asciiStudentID(m_strStudentID, CP_UTF8);
+    CT2A asciiSecretKey(m_strSecretKey, CP_UTF8);</span>
+
+    // ´´½¨ÎÄ¼þ
+<span style = "background-color:#dfd">    auto data = CreateMyNoteContent(content, asciiStudentID, asciiSecretKey);
+    ASSERT_GT(data.size(), 0u);</span>
+
+    // ½âÎöÎÄ¼þ
+<span style = "background-color:#dfd">    auto result = ParseMyNoteContent(data.data(), data.size(), asciiSecretKey);</span>
+
+<span style = "background-color:#dfd">    EXPECT_TRUE(result.success);
+    EXPECT_EQ(result.studentId, std::string(asciiStudentID));
+    EXPECT_EQ(result.content, content);
+    EXPECT_TRUE(result.integrityValid);
+}</span>
+
+<span style = "background-color:#dfd">TEST_F(IntegrationTest, CreateAndParse_ChineseContent)
+{
+    std::string content = "ÖÐÎÄ²âÊÔÄÚÈÝ\n»»ÐÐ²âÊÔ";</span>
+
+<span style = "background-color:#dfd">    CT2A asciiStudentID(m_strStudentID, CP_UTF8);
+    CT2A asciiSecretKey(m_strSecretKey, CP_UTF8);</span>
+
+<span style = "background-color:#dfd">    auto data = CreateMyNoteContent(content, asciiStudentID, asciiSecretKey);
+    auto result = ParseMyNoteContent(data.data(), data.size(), asciiSecretKey);</span>
+
+<span style = "background-color:#dfd">    EXPECT_TRUE(result.success);
+    EXPECT_TRUE(result.integrityValid);
+    EXPECT_EQ(result.content, content);
+}</span>
+
+<span style = "background-color:#dfd">TEST_F(IntegrationTest, Parse_StudentIDMismatch)
+{
+    std::string content = "Test content";
+    const char* wrongStudentID = "WRONG_STUDENT_ID";</span>
+
+<span style = "background-color:#dfd">    CT2A asciiSecretKey(m_strSecretKey, CP_UTF8);</span>
+
+    // Ê¹ÓÃ´íÎóµÄÑ§ºÅ´´½¨ÎÄ¼þ
+<span style = "background-color:#dfd">    auto data = CreateMyNoteContent(content, wrongStudentID, asciiSecretKey);</span>
+
+    // ½âÎöÊ±Ó¦¸Ã³É¹¦£¬µ«Ñ§ºÅ²»Æ¥Åä
+<span style = "background-color:#dfd">    auto result = ParseMyNoteContent(data.data(), data.size(), asciiSecretKey);</span>
+
+<span style = "background-color:#dfd">    EXPECT_TRUE(result.success);
+    EXPECT_NE(result.studentId, std::string(CT2A(m_strStudentID, CP_UTF8)));
+    EXPECT_TRUE(result.integrityValid);  // ÍêÕûÐÔÈÔÈ»ÓÐÐ§
+}</span>
+
+<span style = "background-color:#dfd">TEST_F(IntegrationTest, Parse_TamperedContent_WithConfig)
+{
+    std::string content = "Original content";</span>
+
+<span style = "background-color:#dfd">    CT2A asciiStudentID(m_strStudentID, CP_UTF8);
+    CT2A asciiSecretKey(m_strSecretKey, CP_UTF8);</span>
+
+<span style = "background-color:#dfd">    auto data = CreateMyNoteContent(content, asciiStudentID, asciiSecretKey);</span>
+
+    // ´Û¸ÄÄÚÈÝ
+<span style = "background-color:#dfd">    size_t contentOffset = MYNOTE_MAGIC_SIZE + MYNOTE_STUDENTID_SIZE + sizeof(UINT32);
+    if (contentOffset &lt; data.size())</span>
+    {
+<span style = "background-color:#dfd">        data[contentOffset] ^= 0xFF;  // ·­×ªÒ»¸ö×Ö½Ú</span>
+    }
+
+<span style = "background-color:#dfd">    auto result = ParseMyNoteContent(data.data(), data.size(), asciiSecretKey);</span>
+
+<span style = "background-color:#dfd">    EXPECT_TRUE(result.success);
+    EXPECT_FALSE(result.integrityValid) &lt;&lt; "´Û¸ÄºóµÄÎÄ¼þÓ¦¸ÃÑéÖ¤Ê§°Ü";
+}</span>
+
+<span style = "background-color:#dfd">TEST_F(IntegrationTest, Parse_TamperedHash)
+{
+    std::string content = "Test content";</span>
+
+<span style = "background-color:#dfd">    CT2A asciiStudentID(m_strStudentID, CP_UTF8);
+    CT2A asciiSecretKey(m_strSecretKey, CP_UTF8);</span>
+
+<span style = "background-color:#dfd">    auto data = CreateMyNoteContent(content, asciiStudentID, asciiSecretKey);</span>
+
+    // ´Û¸Ä¼ÓÃÜµÄ¹þÏ£Öµ£¨ÎÄ¼þÄ©Î²£©
+<span style = "background-color:#dfd">    if (data.size() &gt;= MYNOTE_ENCRYPTED_SIZE)</span>
+    {
+<span style = "background-color:#dfd">        data[data.size() - 1] ^= 0xFF;</span>
+    }
+
+<span style = "background-color:#dfd">    auto result = ParseMyNoteContent(data.data(), data.size(), asciiSecretKey);</span>
+
+<span style = "background-color:#dfd">    EXPECT_TRUE(result.success);
+    EXPECT_FALSE(result.integrityValid) &lt;&lt; "´Û¸Ä¹þÏ£ºóÓ¦¸ÃÑéÖ¤Ê§°Ü";
+}</span>
+
+// ============ ±ß½çÌõ¼þ²âÊÔ ============
+
+<span style = "background-color:#dfd">TEST_F(IntegrationTest, CreateAndParse_EmptyContent)
+{
+    CT2A asciiStudentID(m_strStudentID, CP_UTF8);
+    CT2A asciiSecretKey(m_strSecretKey, CP_UTF8);</span>
+
+<span style = "background-color:#dfd">    auto data = CreateMyNoteContent("", asciiStudentID, asciiSecretKey);
+    auto result = ParseMyNoteContent(data.data(), data.size(), asciiSecretKey);</span>
+
+<span style = "background-color:#dfd">    EXPECT_TRUE(result.success);
+    EXPECT_TRUE(result.content.empty());
+    EXPECT_TRUE(result.integrityValid);
+}</span>
+
+<span style = "background-color:#dfd">TEST_F(IntegrationTest, CreateAndParse_LargeContent)
+{</span>
+    // ´´½¨Ò»¸ö½Ï´óµÄÄÚÈÝ£¨1MB£©
+<span style = "background-color:#dfd">    std::string content(1024 * 1024, 'A');</span>
+
+<span style = "background-color:#dfd">    CT2A asciiStudentID(m_strStudentID, CP_UTF8);
+    CT2A asciiSecretKey(m_strSecretKey, CP_UTF8);</span>
+
+<span style = "background-color:#dfd">    auto data = CreateMyNoteContent(content, asciiStudentID, asciiSecretKey);
+    auto result = ParseMyNoteContent(data.data(), data.size(), asciiSecretKey);</span>
+
+<span style = "background-color:#dfd">    EXPECT_TRUE(result.success);
+    EXPECT_EQ(result.content.size(), content.size());
+    EXPECT_TRUE(result.integrityValid);
+}</span>
+
+<span style = "background-color:#dfd">TEST_F(IntegrationTest, CreateAndParse_SpecialCharacters)
+{
+    std::string content = "Special chars: \r\n\t\0\x01\xFF";</span>
+
+<span style = "background-color:#dfd">    CT2A asciiStudentID(m_strStudentID, CP_UTF8);
+    CT2A asciiSecretKey(m_strSecretKey, CP_UTF8);</span>
+
+<span style = "background-color:#dfd">    auto data = CreateMyNoteContent(content, asciiStudentID, asciiSecretKey);
+    auto result = ParseMyNoteContent(data.data(), data.size(), asciiSecretKey);</span>
+
+<span style = "background-color:#dfd">    EXPECT_TRUE(result.success);
+    EXPECT_TRUE(result.integrityValid);
+}</span></pre>
+        <hr />
+        <table width="100%">
+            <thead>
+                <tr>
+                    <th align="center">
+                        <small>Generated by</small>
+                        <a href="https://github.com/OpenCppCoverage/OpenCppCoverage/releases">
+                            <strong>OpenCppCoverage (Version: 0.9.9.0)</strong>
+                        </a>
+                    </th>
+                </tr>
+            </thead>
+        </table>
+    </body>
+</html>

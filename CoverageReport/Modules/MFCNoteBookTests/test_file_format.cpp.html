@@ -1,0 +1,200 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+        <meta charset="utf-8"/>
+	    <title>test_file_format.cpp</title>
+	    <link href="../../third-party/google-code-prettify/prettify-CppCoverage.css" type="text/css" rel="stylesheet" />
+	    <script type="text/javascript" src="../../third-party/google-code-prettify/prettify.js"></script>
+	</head>
+    <body onload="prettyPrint()">
+        <h4></h4>
+        <pre class="prettyprint lang-cpp linenums">
+// test_file_format.cpp - ÎÄ¼þ¸ñÊ½¼ì²âºÍ MyNote ¸ñÊ½²âÊÔ
+#include "pch.h"
+
+using namespace TestableLogic;
+
+// ============ À©Õ¹Ãû¼ì²â²âÊÔ ============
+
+<span style = "background-color:#dfd">TEST(FileFormatTest, DetectByExtension_MyNote)
+{
+    EXPECT_EQ(DetectFormatByExtension(L"test.mynote"), TestableFileFormat::MyNote);
+    EXPECT_EQ(DetectFormatByExtension(L"C:\\folder\\test.MYNOTE"), TestableFileFormat::MyNote);
+    EXPECT_EQ(DetectFormatByExtension(L"test.MyNote"), TestableFileFormat::MyNote);
+}</span>
+
+<span style = "background-color:#dfd">TEST(FileFormatTest, DetectByExtension_PlainText)
+{
+    EXPECT_EQ(DetectFormatByExtension(L"test.txt"), TestableFileFormat::PlainText);
+    EXPECT_EQ(DetectFormatByExtension(L"C:\\folder\\test.TXT"), TestableFileFormat::PlainText);
+}</span>
+
+<span style = "background-color:#dfd">TEST(FileFormatTest, DetectByExtension_Unknown)
+{
+    EXPECT_EQ(DetectFormatByExtension(L"test.doc"), TestableFileFormat::Unknown);
+    EXPECT_EQ(DetectFormatByExtension(L"test"), TestableFileFormat::Unknown);
+    EXPECT_EQ(DetectFormatByExtension(L""), TestableFileFormat::Unknown);
+}</span>
+
+// ============ Ä§Êý¼ì²â²âÊÔ ============
+
+<span style = "background-color:#dfd">TEST(FileFormatTest, DetectByMagic_MyNote)
+{
+    BYTE data[] = "MYNOTE01rest of file...";
+    EXPECT_EQ(DetectFormatByMagic(data, sizeof(data)), TestableFileFormat::MyNote);
+}</span>
+
+<span style = "background-color:#dfd">TEST(FileFormatTest, DetectByMagic_PlainText)
+{
+    BYTE data[] = "Hello, this is plain text";
+    EXPECT_EQ(DetectFormatByMagic(data, sizeof(data)), TestableFileFormat::PlainText);
+}</span>
+
+<span style = "background-color:#dfd">TEST(FileFormatTest, DetectByMagic_TooShort)
+{
+    BYTE data[] = "MYNO";
+    EXPECT_EQ(DetectFormatByMagic(data, 4), TestableFileFormat::Unknown);
+}</span>
+
+<span style = "background-color:#dfd">TEST(FileFormatTest, DetectByMagic_NullData)
+{
+    EXPECT_EQ(DetectFormatByMagic(nullptr, 100), TestableFileFormat::Unknown);
+}</span>
+
+// ============ MyNote ÎÄ¼þÍ·²âÊÔ ============
+
+<span style = "background-color:#dfd">TEST(FileFormatTest, ValidateMyNoteHeader_Valid)
+{
+    std::vector&lt;BYTE&gt; data;</span>
+    // Magic
+<span style = "background-color:#dfd">    const char* magic = "MYNOTE01";
+    for (int i = 0; i &lt; 8; i++) data.push_back(magic[i]);</span>
+    // StudentID (20 bytes)
+<span style = "background-color:#dfd">    for (int i = 0; i &lt; 20; i++) data.push_back('X');</span>
+    // Content length (4 bytes)
+<span style = "background-color:#dfd">    for (int i = 0; i &lt; 4; i++) data.push_back(0);</span>
+    // IV (16 bytes)
+<span style = "background-color:#dfd">    for (int i = 0; i &lt; 16; i++) data.push_back(0);</span>
+    // Encrypted hash (32 bytes)
+<span style = "background-color:#dfd">    for (int i = 0; i &lt; 32; i++) data.push_back(0);</span>
+
+<span style = "background-color:#dfd">    EXPECT_TRUE(ValidateMyNoteHeader(data.data(), data.size()));
+}</span>
+
+<span style = "background-color:#dfd">TEST(FileFormatTest, ValidateMyNoteHeader_InvalidMagic)
+{
+    std::vector&lt;BYTE&gt; data(80, 0);
+    memcpy(data.data(), "WRONGMAG", 8);</span>
+
+<span style = "background-color:#dfd">    EXPECT_FALSE(ValidateMyNoteHeader(data.data(), data.size()));
+}</span>
+
+<span style = "background-color:#dfd">TEST(FileFormatTest, ValidateMyNoteHeader_TooSmall)
+{
+    BYTE data[10] = "MYNOTE01";
+    EXPECT_FALSE(ValidateMyNoteHeader(data, 10));
+}</span>
+
+<span style = "background-color:#dfd">TEST(FileFormatTest, GenerateMyNoteHeader_Content)
+{
+    auto header = GenerateMyNoteHeader("20250313017Z");</span>
+
+<span style = "background-color:#dfd">    ASSERT_EQ(header.size(), MYNOTE_MAGIC_SIZE + MYNOTE_STUDENTID_SIZE);</span>
+
+    // ÑéÖ¤Ä§Êý
+<span style = "background-color:#dfd">    EXPECT_EQ(memcmp(header.data(), "MYNOTE01", 8), 0);</span>
+
+    // ÑéÖ¤Ñ§ºÅ
+<span style = "background-color:#dfd">    EXPECT_EQ(memcmp(header.data() + 8, "20250313017Z", 12), 0);
+}</span>
+
+<span style = "background-color:#dfd">TEST(FileFormatTest, GenerateMyNoteHeader_NullStudentId)
+{
+    auto header = GenerateMyNoteHeader(nullptr);</span>
+
+<span style = "background-color:#dfd">    ASSERT_EQ(header.size(), MYNOTE_MAGIC_SIZE + MYNOTE_STUDENTID_SIZE);
+    EXPECT_EQ(memcmp(header.data(), "MYNOTE01", 8), 0);
+}</span>
+
+// ============ MyNote ÍêÕûÁ÷³Ì²âÊÔ ============
+
+<span style = "background-color:#dfd">TEST(FileFormatTest, CreateAndParse_EmptyContent)
+{
+    const char* studentId = "20250313017Z";
+    const char* secretKey = "BIGC_AI_2025_KEY";</span>
+
+<span style = "background-color:#dfd">    auto data = CreateMyNoteContent("", studentId, secretKey);
+    ASSERT_GT(data.size(), 0u);</span>
+
+<span style = "background-color:#dfd">    auto result = ParseMyNoteContent(data.data(), data.size(), secretKey);</span>
+
+<span style = "background-color:#dfd">    EXPECT_TRUE(result.success);
+    EXPECT_EQ(result.studentId, studentId);
+    EXPECT_TRUE(result.content.empty());
+    EXPECT_TRUE(result.integrityValid);
+}</span>
+
+<span style = "background-color:#dfd">TEST(FileFormatTest, CreateAndParse_WithContent)
+{
+    const char* studentId = "20250313017Z";
+    const char* secretKey = "BIGC_AI_2025_KEY";
+    std::string content = "Hello, this is a test content!\nÖÐÎÄ²âÊÔ";</span>
+
+    // ×ª»»Îª UTF-8
+<span style = "background-color:#dfd">    std::string utf8Content = UnicodeToUTF8(UTF8ToUnicode(content.c_str()).c_str());</span>
+
+<span style = "background-color:#dfd">    auto data = CreateMyNoteContent(content, studentId, secretKey);
+    auto result = ParseMyNoteContent(data.data(), data.size(), secretKey);</span>
+
+<span style = "background-color:#dfd">    EXPECT_TRUE(result.success);
+    EXPECT_EQ(result.studentId, studentId);
+    EXPECT_EQ(result.content, content);
+    EXPECT_TRUE(result.integrityValid);
+}</span>
+
+<span style = "background-color:#dfd">TEST(FileFormatTest, Parse_TamperedContent)
+{
+    const char* studentId = "20250313017Z";
+    const char* secretKey = "BIGC_AI_2025_KEY";
+    std::string content = "Original content";</span>
+
+<span style = "background-color:#dfd">    auto data = CreateMyNoteContent(content, studentId, secretKey);</span>
+
+    // ´Û¸ÄÄÚÈÝ£¨ÐÞ¸ÄÄÚÈÝÇøµÄµÚÒ»¸ö×Ö½Ú£©
+<span style = "background-color:#dfd">    size_t contentOffset = MYNOTE_MAGIC_SIZE + MYNOTE_STUDENTID_SIZE + sizeof(UINT32);
+    data[contentOffset] = 'X';  // ´Û¸Ä</span>
+
+<span style = "background-color:#dfd">    auto result = ParseMyNoteContent(data.data(), data.size(), secretKey);</span>
+
+<span style = "background-color:#dfd">    EXPECT_TRUE(result.success);  // ½âÎö³É¹¦
+    EXPECT_FALSE(result.integrityValid);  // µ«ÍêÕûÐÔÑéÖ¤Ê§°Ü
+}</span>
+
+<span style = "background-color:#dfd">TEST(FileFormatTest, Parse_WrongKey)
+{
+    const char* studentId = "20250313017Z";
+    const char* correctKey = "BIGC_AI_2025_KEY";
+    const char* wrongKey = "WRONG_KEY_12345!";
+    std::string content = "Test content";</span>
+
+<span style = "background-color:#dfd">    auto data = CreateMyNoteContent(content, studentId, correctKey);
+    auto result = ParseMyNoteContent(data.data(), data.size(), wrongKey);</span>
+
+<span style = "background-color:#dfd">    EXPECT_TRUE(result.success);
+    EXPECT_FALSE(result.integrityValid);  // ÃÜÔ¿²»¶Ô£¬ÍêÕûÐÔÑéÖ¤Ê§°Ü
+}</span></pre>
+        <hr />
+        <table width="100%">
+            <thead>
+                <tr>
+                    <th align="center">
+                        <small>Generated by</small>
+                        <a href="https://github.com/OpenCppCoverage/OpenCppCoverage/releases">
+                            <strong>OpenCppCoverage (Version: 0.9.9.0)</strong>
+                        </a>
+                    </th>
+                </tr>
+            </thead>
+        </table>
+    </body>
+</html>

@@ -1,0 +1,166 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+        <meta charset="utf-8"/>
+	    <title>test_line_number.cpp</title>
+	    <link href="../../third-party/google-code-prettify/prettify-CppCoverage.css" type="text/css" rel="stylesheet" />
+	    <script type="text/javascript" src="../../third-party/google-code-prettify/prettify.js"></script>
+	</head>
+    <body onload="prettyPrint()">
+        <h4></h4>
+        <pre class="prettyprint lang-cpp linenums">
+// test_line_number.cpp - ÐÐºÅ¼ÆËã²âÊÔ
+#include "pch.h"
+
+using namespace TestableLogic;
+
+// ============ ÐÐÊýÍ³¼Æ²âÊÔ ============
+
+<span style = "background-color:#dfd">TEST(LineNumberTest, CountLines_Empty)
+{
+    EXPECT_EQ(CountLines(L""), 1);
+    EXPECT_EQ(CountLines(nullptr), 1);
+}</span>
+
+<span style = "background-color:#dfd">TEST(LineNumberTest, CountLines_SingleLine)
+{
+    EXPECT_EQ(CountLines(L"Hello World"), 1);
+}</span>
+
+<span style = "background-color:#dfd">TEST(LineNumberTest, CountLines_MultipleLines)
+{
+    EXPECT_EQ(CountLines(L"Line1\nLine2\nLine3"), 3);
+    EXPECT_EQ(CountLines(L"Line1\nLine2\n"), 3);  // Ä©Î²»»ÐÐ
+}</span>
+
+<span style = "background-color:#dfd">TEST(LineNumberTest, CountLines_OnlyNewlines)
+{
+    EXPECT_EQ(CountLines(L"\n\n\n"), 4);
+}</span>
+
+<span style = "background-color:#dfd">TEST(LineNumberTest, CountLines_WindowsLineEndings)
+{</span>
+    // Windows »»ÐÐ \r\n£¬\r ²»µ¥¶À¼ÆÊý
+<span style = "background-color:#dfd">    EXPECT_EQ(CountLines(L"Line1\r\nLine2\r\nLine3"), 3);
+}</span>
+
+// ============ ÐÐºÅ¿í¶È¼ÆËã²âÊÔ ============
+
+<span style = "background-color:#dfd">TEST(LineNumberTest, CalculateWidth_SmallFile)
+{
+    int width = CalculateLineNumberWidth(10, 8);</span>
+    // ×îÉÙ3Î» + 2±ß¾à = 5 * 8 = 40
+<span style = "background-color:#dfd">    EXPECT_GE(width, 40);
+}</span>
+
+<span style = "background-color:#dfd">TEST(LineNumberTest, CalculateWidth_LargeFile)
+{
+    int width = CalculateLineNumberWidth(10000, 8);</span>
+    // 5Î» + 2±ß¾à = 7 * 8 = 56
+<span style = "background-color:#dfd">    EXPECT_GE(width, 56);
+}</span>
+
+<span style = "background-color:#dfd">TEST(LineNumberTest, CalculateWidth_ZeroLines)
+{
+    int width = CalculateLineNumberWidth(0, 8);
+    EXPECT_GT(width, 0);  // Ó¦¸ÃÓÐÄ¬ÈÏÖµ
+}</span>
+
+<span style = "background-color:#dfd">TEST(LineNumberTest, CalculateWidth_ZeroCharWidth)
+{
+    int width = CalculateLineNumberWidth(100, 0);
+    EXPECT_GT(width, 0);  // Ó¦¸ÃÓÐÄ¬ÈÏÖµ
+}</span>
+
+// ============ ÐÐÆðÊ¼Î»ÖÃ²âÊÔ ============
+
+<span style = "background-color:#dfd">TEST(LineNumberTest, GetLineStart_FirstLine)
+{
+    EXPECT_EQ(GetLineStartPosition(L"Line1\nLine2\nLine3", 0), 0);
+}</span>
+
+<span style = "background-color:#dfd">TEST(LineNumberTest, GetLineStart_SecondLine)
+{
+    EXPECT_EQ(GetLineStartPosition(L"Line1\nLine2\nLine3", 1), 6);  // "Line1\n" ³¤¶ÈÎª6
+}</span>
+
+<span style = "background-color:#dfd">TEST(LineNumberTest, GetLineStart_ThirdLine)
+{
+    EXPECT_EQ(GetLineStartPosition(L"Line1\nLine2\nLine3", 2), 12);
+}</span>
+
+<span style = "background-color:#dfd">TEST(LineNumberTest, GetLineStart_BeyondEnd)
+{
+    const wchar_t* text = L"Line1\nLine2";
+    int pos = GetLineStartPosition(text, 10);  // ³¬³ö·¶Î§
+    EXPECT_EQ(pos, (int)wcslen(text));  // ·µ»ØÄ©Î²
+}</span>
+
+<span style = "background-color:#dfd">TEST(LineNumberTest, GetLineStart_EmptyLines)
+{
+    EXPECT_EQ(GetLineStartPosition(L"\n\n\n", 0), 0);
+    EXPECT_EQ(GetLineStartPosition(L"\n\n\n", 1), 1);
+    EXPECT_EQ(GetLineStartPosition(L"\n\n\n", 2), 2);
+}</span>
+
+// ============ ×Ö·ûÎ»ÖÃ×ªÐÐºÅ²âÊÔ ============
+
+<span style = "background-color:#dfd">TEST(LineNumberTest, GetLineFromPos_FirstLine)
+{
+    EXPECT_EQ(GetLineFromCharPosition(L"Line1\nLine2\nLine3", 0), 0);
+    EXPECT_EQ(GetLineFromCharPosition(L"Line1\nLine2\nLine3", 3), 0);
+}</span>
+
+<span style = "background-color:#dfd">TEST(LineNumberTest, GetLineFromPos_SecondLine)
+{
+    EXPECT_EQ(GetLineFromCharPosition(L"Line1\nLine2\nLine3", 6), 1);
+    EXPECT_EQ(GetLineFromCharPosition(L"Line1\nLine2\nLine3", 10), 1);
+}</span>
+
+<span style = "background-color:#dfd">TEST(LineNumberTest, GetLineFromPos_ThirdLine)
+{
+    EXPECT_EQ(GetLineFromCharPosition(L"Line1\nLine2\nLine3", 12), 2);
+}</span>
+
+<span style = "background-color:#dfd">TEST(LineNumberTest, GetLineFromPos_NullText)
+{
+    EXPECT_EQ(GetLineFromCharPosition(nullptr, 5), 0);
+}</span>
+
+<span style = "background-color:#dfd">TEST(LineNumberTest, GetLineFromPos_NegativePos)
+{
+    EXPECT_EQ(GetLineFromCharPosition(L"Test", -1), 0);
+}</span>
+
+// ============ ÐÐºÅÍ¬²½Ò»ÖÂÐÔ²âÊÔ ============
+
+<span style = "background-color:#dfd">TEST(LineNumberTest, LinePositionConsistency)
+{
+    const wchar_t* text = L"First line\nSecond line\nThird line\nFourth line";</span>
+
+<span style = "background-color:#dfd">    int lineCount = CountLines(text);
+    EXPECT_EQ(lineCount, 4);</span>
+
+    // Ã¿Ò»ÐÐµÄÆðÊ¼Î»ÖÃÓ¦¸ÃÄÜ·´ÍÆ³öÕýÈ·µÄÐÐºÅ
+<span style = "background-color:#dfd">    for (int line = 0; line &lt; lineCount; line++)</span>
+    {
+<span style = "background-color:#dfd">        int startPos = GetLineStartPosition(text, line);
+        int computedLine = GetLineFromCharPosition(text, startPos);
+        EXPECT_EQ(computedLine, line) &lt;&lt; "Line " &lt;&lt; line &lt;&lt; " mismatch";
+    }
+}</span></pre>
+        <hr />
+        <table width="100%">
+            <thead>
+                <tr>
+                    <th align="center">
+                        <small>Generated by</small>
+                        <a href="https://github.com/OpenCppCoverage/OpenCppCoverage/releases">
+                            <strong>OpenCppCoverage (Version: 0.9.9.0)</strong>
+                        </a>
+                    </th>
+                </tr>
+            </thead>
+        </table>
+    </body>
+</html>

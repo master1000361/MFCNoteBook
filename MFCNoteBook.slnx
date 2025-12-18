@@ -1,0 +1,11 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Folder Name="/解决方案项/">
+    <File Path="run_coverage.bat" />
+  </Folder>
+  <Project Path="MFCNoteBook/MFCNoteBook.vcxproj" />
+  <Project Path="MFCNoteBookTests/MFCNoteBookTests.vcxproj" Id="c506be9f-eb35-463b-91dc-ea899e036e4c" />
+</Solution>
