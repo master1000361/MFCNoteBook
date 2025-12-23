@@ -61,11 +61,11 @@ Google Test 1.12.0
 
 方法 2：手动运行
 
-# 1. 运行测试
+1. 运行测试
 
 x64\Debug\MFCNoteBookTests.exe
 
-# 2. 生成覆盖率报告
+2. 生成覆盖率报告
 
 OpenCppCoverage.exe --sources MFCNoteBook ^
 
@@ -73,7 +73,7 @@ OpenCppCoverage.exe --sources MFCNoteBook ^
   
   -- x64\Debug\MFCNoteBookTests.exe
 
-# 3. 查看报告
+3. 查看报告
 
 start coverage_report\index.html
 
